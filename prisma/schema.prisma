@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["jsonProtocol"]
+}
+
+datasource db {
+  provider     = "mysql"
+  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+// Necessary for Next auth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String   @unique
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  active        Boolean @default(true)
+  dbAccess      Int
+  role          String
+  authorId      Author?
+  favoritePosts Post[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Author {
+  id            String   @id @default(cuid())
+  bio           String   @default("") @db.Text
+  userId        String   @unique
+  User          User     @relation(fields: [userId], references: [id])
+  twitterLink   String   @default("") @db.Text
+  facebookLink  String   @default("") @db.Text
+  linkedInLink  String   @default("") @db.Text
+  gitHubLink    String   @default("") @db.Text
+  active        Boolean  @default(true)
+  images        Image[]
+  drafts        Draft[]
+  createdPosts  Post[]
+  createdSeries Series[]
+}
+
+model Category {
+  id              String     @id @default(cuid())
+  title           String     @unique
+  parentId        String?    @unique
+  parentCategory  Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childCategories Category[] @relation("CategoryToCategory")
+  relevantPosts   Post[]
+  drafts          Draft[]
+}
+
+model Post {
+  id              String @id @default(cuid())
+  title           String @unique
+  content         String @db.Text
+  metaDescription String 
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
+  @@index([authorId])
+  draftId String @unique
+  draft   Draft  @relation(fields: [draftId], references: [id])
+
+  seriesId        String?    @unique
+  seriesPostOrder Int?
+  series          Series?    @relation(fields: [seriesId], references: [id])
+  images          Image[]
+  users           User[]
+  categories      Category[]
+  tags            Tag[]
+}
+
+model Draft {
+  id              String @id @default(cuid())
+  title           String @unique
+  content         String @db.Text
+  metaDescription String 
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+  submitted   Boolean   @default(false)
+  submittedAt DateTime?
+
+  published   Boolean   @default(false)
+  postId      String?   @unique
+  post        Post?
+  publishedAt DateTime?
+
+  authorId String 
+  author   Author @relation(fields: [authorId], references: [id])
+  @@index([authorId])
+
+  seriesId        String? 
+  seriesPostOrder Int?
+  series          Series? @relation(fields: [seriesId], references: [id])
+  @@index([seriesId])
+
+  images     Image[]
+  categories Category[]
+  tags       Tag[]
+}
+
+model Image {
+  id       String @id @default(cuid())
+  title    String
+  fileType String
+  alt      String
+
+  posts  Post[]
+  drafts Draft[]
+
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+}
+
+model Series {
+  id          String @id @default(cuid())
+  title       String @unique
+  description String
+
+  authorId String  @unique
+  author   Author  @relation(fields: [authorId], references: [id])
+  drafts   Draft[]
+  posts    Post[]
+}
+
+model Tag {
+  id     String  @id @default(cuid())
+  title  String  @unique
+  posts  Post[]
+  drafts Draft[]
+}
