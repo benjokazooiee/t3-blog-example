@@ -1,4 +1,4 @@
-import type { Draft, Series, Category, Image, Tag } from '@prisma/client';
+import type { Category, Image, Tag } from '@prisma/client';
 
 
 type Props = {
@@ -29,7 +29,7 @@ categories
 tags
 */
 const DraftEdit = (draftEditorProps: Props) => {
-    const { id,
+/*     const { id,
         title,
         content,
         metaDescription,
@@ -42,10 +42,11 @@ const DraftEdit = (draftEditorProps: Props) => {
         images,
         categories,
         tags
-    } = draftEditorProps
+    } = draftEditorProps */
 
     return (
         <>
+        {JSON.stringify(draftEditorProps)}
         </>
     )
 }

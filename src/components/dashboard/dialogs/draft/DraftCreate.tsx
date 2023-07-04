@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "~/utils/api";
 import { createId } from "@paralleldrive/cuid2";
-import { useRouter } from "next/router";
 import { setCurrentDraft } from "~/utils/currentDrafts";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
